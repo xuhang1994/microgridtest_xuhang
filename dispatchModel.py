@@ -11,7 +11,7 @@ import math
 import copy
 import numpy
 
-
+##This is ShiYunHui's first try of Github, hello!
 def define_variables(pv1,es1,absc1,bol1,cs1,ac1,gt1,ut,inv):
     global power_es1_into, power_es1_outof, energy_es1, power_absc1, power_bol1, power_cs1, coldintotank, coldoutoftank, power_ac1, power_gte1, om_es1, om_absc1, om_bol1, om_cs1, om_ac1, om_gte1, power_utility, dc, z_pwut, det_pwut_l, det_pwut_u, aux_pwst, det_ice, z_acdc, det_acdc, det_es, hourly_cost, low_heat, medium_heat, high_heat, Q_ref, S_ice, i, bigM
     power_es1_into = list()
