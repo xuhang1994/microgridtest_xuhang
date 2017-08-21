@@ -134,9 +134,6 @@ def define_Constraints(optimalDispatch,pv1,es1,absc1,bol1,cs1,ac1,gt1,ut,inv):
             optimalDispatch += power_es1_outof[i] - power_es1_outof[i - 1] >= -es1.maxDetP
             optimalDispatch += power_es1_outof[i] - power_es1_outof[i - 1] <= es1.maxDetP
 
-        if i in range(89, 96):
-            optimalDispatch += power_es1_outof[i] == 0
-
     ## Electrical Storage Zero constraint
     # optimalDispatch += energy_es1[0] == energy_es1[95]
     optimalDispatch += energy_es1[0] == energy_es1[95] * (1 - es1.selfRelease) + 0.25 * (
@@ -151,7 +148,7 @@ def define_Constraints(optimalDispatch,pv1,es1,absc1,bol1,cs1,ac1,gt1,ut,inv):
         optimalDispatch += low_heat[i] == 0.1 * steam_heat[i] + power_gte1[i] * gt1.HER * gt1.heat_recycle * 0.3
         optimalDispatch += medium_heat[i] - (power_absc1[i] - high_heat[i] - power_bol1[i] + steam_heat[i]) + low_heat[
             i] >= water_heat[i]  # + power_hs1[i]
-        '''
+    '''
         ## heat storage capacity constraint
         if i == 0:
             optimalDispatch += energy_hs1[i] == hs1.Tint * hs1.capacity

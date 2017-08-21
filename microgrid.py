@@ -37,7 +37,7 @@ class electricStorage:
 
 
 class absorptionChiller:
-    def __init__(self, om = 0.00008, COP_htc = 0.8, COP_hth = 1, Hmin = 0, Hmax = 1000):
+    def __init__(self, om = 0.00008, COP_htc = 1.2, COP_hth = 1, Hmin = 0, Hmax = 1000):
         self.om = om
         self.COP_htc = COP_htc
         self.COP_hth = COP_hth
@@ -50,7 +50,7 @@ class absorptionChiller:
                 "热-热转化比":self.COP_hth}
 
 class boiler:
-    def __init__(self, om = 0.04, Pmax = 1000, Pmin = 0, efficiency = 0.95):
+    def __init__(self, om = 0.03, Pmax = 1000, Pmin = 0, efficiency = 0.9):
         self.om = om
         self.Pmin = Pmin
         self.Pmax = Pmax
@@ -83,7 +83,7 @@ class heatStorage:
                 "最大放热功率(KW)":-self.Hmin}
 
 class coldStorage:
-    def __init__(self, om = 0.01, capacity = 3000, Tmin = 0.1, Tmax = 0.95, Tint = 0.1, Hin = 500, Hout = 500, Pmin = 0, Pmax = 500, maxdetP = 500, EER = 3 , efficiency = 0.9 , COP = 3 , Partition_in = 0.9, Partition_out = 0.9, mode = "并联" ,self_release = 0.001):
+    def __init__(self, om = 0.01, capacity = 3000, Tmin = 0.1, Tmax = 0.95, Tint = 0.1, Hin = 500, Hout = 500, Pmin = 0, Pmax = 500, maxdetP = 500, EER = 3 , efficiency = 0.9 , COP = 3 , Partition_in = 0.9, Partition_out = 0.9, mode = "并联" ,self_release = 0.002):
         self.om = om
         self.capacity = capacity
         self.Tmin = Tmin
@@ -134,7 +134,7 @@ class airConditioner:## P>=0 cooling, P<0 heating
                 "制热能效比":self.COP}
 
 class gasTurbine:
-    def __init__(self, om = 0.063, Pmax = 1000, Pmin = 50, efficiency = 0.6, heat_recycle = 0.6):
+    def __init__(self, om = 0.063, Pmax = 1000, Pmin = 50, efficiency = 0.33, heat_recycle = 0.6):
         self.om = om
         self.Pmax = Pmax
         self.Pmin = Pmin
@@ -152,7 +152,7 @@ class gasTurbine:
 
 
 class utility:
-    def __init__(self, buy_price = 0.8, sell_price = 0, gas_price = 0.349,steam_price = 348/800):
+    def __init__(self, buy_price = 0.8, sell_price = 0, gas_price = 0.349,steam_price = 348/996):
         self.buy_price = buy_price
         self.sell_price = sell_price
         self.gas_price = gas_price

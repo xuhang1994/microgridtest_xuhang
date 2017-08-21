@@ -135,9 +135,10 @@ def define_Constraints(optimalDispatch,pv1,es1,absc1,bol1,cs1,ac1,gt1,ut,inv):
             optimalDispatch += power_es1_into[i] - power_es1_into[i - 1] <= es1.maxDetP
             optimalDispatch += power_es1_outof[i] - power_es1_outof[i - 1] >= -es1.maxDetP
             optimalDispatch += power_es1_outof[i] - power_es1_outof[i - 1] <= es1.maxDetP
-
+        '''
         if i in range(89, 96):
             optimalDispatch += power_es1_outof[i] == 0
+        '''
 
     ## Electrical Storage Zero constraint
     # optimalDispatch += energy_es1[0] == energy_es1[95]
@@ -279,7 +280,6 @@ cold_load = microgrid_data['冷负荷'].tolist()
 water_heat = microgrid_data['热水负荷'].tolist()
 steam_heat = microgrid_data['蒸汽负荷'].tolist()
 
-
 '''Construct the OptimalDispatch linear programming model'''
 optimalDispatch = LpProblem('optimalDisaptch',LpMinimize)
 
@@ -331,12 +331,12 @@ dep_cost = pd.Series([x.varValue for x in aux_pwst])
 electricity_cost = 0.25 * pd.Series([x.varValue for x in power_utility]) * pd.Series(ut.buy_price)
 fuel_cost = pd.Series([x.varValue for x in hourly_cost]) - om_cost - dep_cost - electricity_cost
 for i in range(72,76):
-    desiredpower[i] = desiredpower[i] - 3000
+    desiredpower[i] = desiredpower[i] - 2000
 print(sum([x.varValue for x in hourly_cost]))
 df= pd.DataFrame()
 df['电网购电功率'] = ut.result
-df['蒸汽购买量(单位：t)'] = pd.Series([x.varValue for x in high_heat]) / 800
-df['天然气购买量（单位：立方米）'] = ut.gas_utility / 9.7
+df['蒸汽购买量(单位：t)'] = pd.Series([x.varValue for x in high_heat]) / 996
+df['天然气购买量（单位：立方米）'] = ut.gas_utility * 0.25 * 3600 / 35885
 df['中品位热功率'] = pd.Series([x.varValue for x in medium_heat])
 df['低品位热功率'] = pd.Series([x.varValue for x in low_heat])
 df['电储能充电功率'] = es1.power_into
