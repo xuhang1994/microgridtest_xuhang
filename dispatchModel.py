@@ -115,10 +115,12 @@ def define_Constraints(optimalDispatch,pv1,es1,absc1,bol1,cs1,ac1,gt1,ut,inv):
     es1selfrelease = [math.pow((1 - es1.selfRelease), 95 - i) for i in range(96)]
     for i in range(96):
         ## ac power balance
-        optimalDispatch += power_utility[i] + power_gte1[i] == acload[i] + z_acdc[i] + power_ac1[i] + power_cs1[
-            i] + 0.025 * (ac1.EER + 1) * power_ac1[i]
+        #optimalDispatch += power_utility[i] + power_gte1[i] == acload[i] + z_acdc[i] + power_ac1[i] + power_cs1[
+            #i] + 0.025 * (ac1.EER + 1) * power_ac1[i]
         ## dc power balance
-        optimalDispatch += dc[i] + pv1.output[i] + power_es1_outof[i] == dcload[i] + power_es1_into[i]
+        #optimalDispatch += dc[i] + pv1.output[i] + power_es1_outof[i] == dcload[i] + power_es1_into[i]
+        optimalDispatch += power_utility[i] + power_gte1[i] + pv1.output[i] + power_es1_outof[i] == acload[i] + power_ac1[i] + power_cs1[
+            i] + power_es1_into[i]
         ## MAX-MIN power bound constraints already represented in LpVariables
         ## Electrical Storage capacity constraint
         if i == 0:
@@ -135,10 +137,9 @@ def define_Constraints(optimalDispatch,pv1,es1,absc1,bol1,cs1,ac1,gt1,ut,inv):
             optimalDispatch += power_es1_into[i] - power_es1_into[i - 1] <= es1.maxDetP
             optimalDispatch += power_es1_outof[i] - power_es1_outof[i - 1] >= -es1.maxDetP
             optimalDispatch += power_es1_outof[i] - power_es1_outof[i - 1] <= es1.maxDetP
-        '''
-        if i in range(89, 96):
-            optimalDispatch += power_es1_outof[i] == 0
-        '''
+
+        #if i in range(88, 95):
+            #optimalDispatch += power_es1_outof[i] == 0
 
     ## Electrical Storage Zero constraint
     # optimalDispatch += energy_es1[0] == energy_es1[95]
@@ -147,6 +148,7 @@ def define_Constraints(optimalDispatch,pv1,es1,absc1,bol1,cs1,ac1,gt1,ut,inv):
     '''of Heat'''
     for i in range(96):
         ## heat balance
+        ##optimalDispatch += high_heat[i] + power_bol1[i] + gt1.HER * gt1.heat_recycle * power_gte1[i] == power_absc1[i] + steam_heat[i] + water_heat[i]
         optimalDispatch += high_heat[i] + power_bol1[i] >= steam_heat[i]
         optimalDispatch += medium_heat[i] == 0.3 * steam_heat[i] + power_gte1[i] * gt1.HER * gt1.heat_recycle
         optimalDispatch += high_heat[i] + power_bol1[i] - steam_heat[i] + medium_heat[i] >= power_absc1[i]
@@ -236,7 +238,7 @@ def define_Constraints(optimalDispatch,pv1,es1,absc1,bol1,cs1,ac1,gt1,ut,inv):
         ##Eletrical Storage SOS1 constraint
         optimalDispatch += power_es1_outof[i] <= (1 - det_es[i]) * bigM + 0.01
         optimalDispatch += power_es1_into[i] <= det_es[i] * bigM + 0.01
-
+        '''
         ##dc-ac det_acdc = 1 if dc < 0
         optimalDispatch += dc[i] + bigM * det_acdc[i] >= 0
         optimalDispatch += dc[i] <= bigM * (1 - det_acdc[i])
@@ -244,6 +246,7 @@ def define_Constraints(optimalDispatch,pv1,es1,absc1,bol1,cs1,ac1,gt1,ut,inv):
         optimalDispatch += z_acdc[i] - dc[i] * inv.dc_ac_efficiency >= -bigM * (1 - det_acdc[i]) - 0.001
         optimalDispatch += inv.ac_dc_efficiency * z_acdc[i] - dc[i] <= bigM * det_acdc[i] + 0.001
         optimalDispatch += inv.ac_dc_efficiency * z_acdc[i] - dc[i] >= -bigM * det_acdc[i] - 0.001
+        '''
     return optimalDispatch
 '''Constrcut the microgrid devices and utility prices'''
 pv1 = PV()
@@ -331,7 +334,7 @@ dep_cost = pd.Series([x.varValue for x in aux_pwst])
 electricity_cost = 0.25 * pd.Series([x.varValue for x in power_utility]) * pd.Series(ut.buy_price)
 fuel_cost = pd.Series([x.varValue for x in hourly_cost]) - om_cost - dep_cost - electricity_cost
 for i in range(72,76):
-    desiredpower[i] = desiredpower[i] - 2000
+    desiredpower[i] = desiredpower[i] - 3000
 print(sum([x.varValue for x in hourly_cost]))
 df= pd.DataFrame()
 df['电网购电功率'] = ut.result
