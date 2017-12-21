@@ -354,8 +354,8 @@ fuel_cost = pd.Series([x.varValue for x in hourly_cost]) - om_cost - dep_cost - 
 print(sum([x.varValue for x in hourly_cost]))
 df= pd.DataFrame()
 df['电网购电功率'] = ut.result
-df['蒸汽购买量(单位：t)'] = pd.Series([x.varValue for x in high_heat]) / 800
-df['天然气购买量（单位：立方米）'] = ut.gas_utility / 9.7
+df['蒸汽购买量(单位：t)'] = pd.Series([x.varValue for x in high_heat]) * 0.25 / 996
+df['天然气购买量（单位：立方米）'] = ut.gas_utility * 0.25 * 3600 / 35885
 df['中品位热功率'] = pd.Series([x.varValue for x in medium_heat])
 df['低品位热功率'] = pd.Series([x.varValue for x in low_heat])
 df['电储能充电功率'] = es1.power_into

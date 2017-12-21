@@ -13,7 +13,7 @@ import numpy
 
 ##This is ShiYunHui's first try of Github, hello!
 def define_variables(pv1,es1,absc1,bol1,cs1,ac1,gt1,ut,inv):
-    global power_es1_into, power_es1_outof, energy_es1, power_absc1, power_bol1, power_cs1, coldintotank, coldoutoftank, power_ac1, power_gte1, om_es1, om_absc1, om_bol1, om_cs1, om_ac1, om_gte1, power_utility, dc, z_pwut, det_pwut_l, det_pwut_u, aux_pwst, det_ice, z_acdc, det_acdc, det_es, hourly_cost, low_heat, medium_heat, high_heat, Q_ref, S_ice, i, bigM
+    global power_es1_into, power_es1_outof, energy_es1, power_absc1, power_bol1, power_cs1, coldintotank, coldoutoftank, power_ac1, power_gte1, om_es1, om_absc1, om_bol1, om_cs1, om_ac1, om_gte1, power_utility, dc, z_pwut, det_pwut_l, det_pwut_u, aux_pwst, det_ice, z_acdc, det_acdc, det_es, hourly_cost, low_heat, medium_heat, buy_heat, Q_ref, S_ice, i, bigM
     power_es1_into = list()
     power_es1_outof = list()
     energy_es1 = list()
@@ -46,7 +46,7 @@ def define_variables(pv1,es1,absc1,bol1,cs1,ac1,gt1,ut,inv):
     hourly_cost = list()
     low_heat = list()
     medium_heat = list()
-    high_heat = list()
+    buy_heat = list()
     Q_ref = list()
     S_ice = list()
     for i in range(96):
@@ -63,7 +63,7 @@ def define_variables(pv1,es1,absc1,bol1,cs1,ac1,gt1,ut,inv):
         dc.append(LpVariable('DCnetload_' + str(i)))  ## AC-DC when >0, DC-AC when <0
         low_heat.append(LpVariable('low_heat_' + str(i), lowBound=0))
         medium_heat.append(LpVariable('medium_heat_' + str(i), lowBound=0))
-        high_heat.append(LpVariable('high_heat_' + str(i), lowBound=0))
+        buy_heat.append(LpVariable('buy_heat_' + str(i), lowBound=0))
         Q_ref.append(LpVariable('Q_ref_' + str(i), lowBound=0))
         S_ice.append(LpVariable('S_ice_' + str(i), cs1.Tmin * cs1.capacity, cs1.Tmax * cs1.capacity))
 
@@ -110,7 +110,7 @@ def define_Constraints(optimalDispatch,pv1,es1,absc1,bol1,cs1,ac1,gt1,ut,inv):
                                              om_gte1[i] + aux_pwst[i] + (power_gte1[i] * (1 / gt1.efficiency) +
                                                                          power_bol1[i] * (
                                                                          1 / bol1.efficiency)) * 0.25 * ut.gas_price + \
-                                             high_heat[i] * ut.steam_price * 0.25  # + om_hs1[i]
+                                             buy_heat[i] * ut.steam_price * 0.25  # + om_hs1[i]
     '''of Electricity'''
     es1selfrelease = [math.pow((1 - es1.selfRelease), 95 - i) for i in range(96)]
     for i in range(96):
@@ -121,6 +121,7 @@ def define_Constraints(optimalDispatch,pv1,es1,absc1,bol1,cs1,ac1,gt1,ut,inv):
         #optimalDispatch += dc[i] + pv1.output[i] + power_es1_outof[i] == dcload[i] + power_es1_into[i]
         optimalDispatch += power_utility[i] + power_gte1[i] + pv1.output[i] + power_es1_outof[i] == acload[i] + power_ac1[i] + power_cs1[
             i] + power_es1_into[i]
+        #optimalDispatch += power_gte1[i]-power_gte1[i-1] <=500
         ## MAX-MIN power bound constraints already represented in LpVariables
         ## Electrical Storage capacity constraint
         if i == 0:
@@ -137,25 +138,16 @@ def define_Constraints(optimalDispatch,pv1,es1,absc1,bol1,cs1,ac1,gt1,ut,inv):
             optimalDispatch += power_es1_into[i] - power_es1_into[i - 1] <= es1.maxDetP
             optimalDispatch += power_es1_outof[i] - power_es1_outof[i - 1] >= -es1.maxDetP
             optimalDispatch += power_es1_outof[i] - power_es1_outof[i - 1] <= es1.maxDetP
-
-        #if i in range(88, 95):
-            #optimalDispatch += power_es1_outof[i] == 0
-
-    ## Electrical Storage Zero constraint
-    # optimalDispatch += energy_es1[0] == energy_es1[95]
     optimalDispatch += energy_es1[0] == energy_es1[95] * (1 - es1.selfRelease) + 0.25 * (
     es1.efficiency * power_es1_into[0] - (1 / es1.efficiency) * power_es1_outof[0])
     '''of Heat'''
     for i in range(96):
         ## heat balance
-        ##optimalDispatch += high_heat[i] + power_bol1[i] + gt1.HER * gt1.heat_recycle * power_gte1[i] == power_absc1[i] + steam_heat[i] + water_heat[i]
-        optimalDispatch += high_heat[i] + power_bol1[i] >= steam_heat[i]
-        optimalDispatch += medium_heat[i] == 0.3 * steam_heat[i] + power_gte1[i] * gt1.HER * gt1.heat_recycle
-        optimalDispatch += high_heat[i] + power_bol1[i] - steam_heat[i] + medium_heat[i] >= power_absc1[i]
-        optimalDispatch += medium_heat[i] >= power_absc1[i]
-        optimalDispatch += low_heat[i] == 0.1 * steam_heat[i] + power_gte1[i] * gt1.HER * gt1.heat_recycle * 0.3
-        optimalDispatch += medium_heat[i] - (power_absc1[i] - high_heat[i] - power_bol1[i] + steam_heat[i]) + low_heat[
-            i] >= water_heat[i]  # + power_hs1[i]
+        #optimalDispatch += buy_heat[i] + power_bol1[i] + gt1.HER * gt1.heat_recycle * power_gte1[i] == power_absc1[i] + steam_heat[i] + water_heat[i]
+        optimalDispatch += medium_heat[i] == buy_heat[i] + power_bol1[i] + power_gte1[i] * gt1.HER * gt1.heat_recycle
+        optimalDispatch += medium_heat[i] >= steam_heat[i]
+        optimalDispatch += low_heat[i] == 0.5 * steam_heat[i] + power_gte1[i] * gt1.HER * gt1.heat_recycle * 0.6
+        optimalDispatch += medium_heat[i] - steam_heat[i] + low_heat[i] >= power_absc1[i] + water_heat[i]
         '''
         ## heat storage capacity constraint
         if i == 0:
@@ -175,7 +167,7 @@ def define_Constraints(optimalDispatch,pv1,es1,absc1,bol1,cs1,ac1,gt1,ut,inv):
     '''of Cold'''
     for i in range(96):
         ## cold balance
-        optimalDispatch += power_absc1[i] * absc1.COP_htc + coldoutoftank[i] + power_ac1[i] * ac1.EER + Q_ref[i] == \
+        optimalDispatch += power_absc1[i] * absc1.COP_htc + coldoutoftank[i] + power_ac1[i] * ac1.EER  == \
                            cold_load[i]
         optimalDispatch += power_cs1[i] * cs1.EER - coldintotank[i] == Q_ref[i]
         if cs1.mode == '串联':
@@ -300,7 +292,7 @@ optimalDispatch += lpSum(om_es1) \
     + lpSum(aux_pwst) \
     + lpSum(power_gte1)*(ut.gas_price*0.25/gt1.efficiency) \
     + lpSum(power_bol1)*(ut.gas_price*0.25/bol1.efficiency) \
-    + lpSum(high_heat)*(ut.steam_price*0.25)
+    + lpSum(buy_heat)*(ut.steam_price*0.25)
     #+ lpSum(om_hs1)
 
 '''Define the constraints'''
@@ -328,18 +320,18 @@ desiredpower = copy.deepcopy(ut.result)
 
 om_cost = pd.Series([x.varValue for x in om_ac1])+pd.Series([x.varValue for x in om_cs1])+pd.Series([x.varValue for x in om_absc1])+ \
           pd.Series([x.varValue for x in om_bol1])+pd.Series([x.varValue for x in om_es1])+pd.Series([x.varValue for x in om_gte1]) # + pd.Series([x.varValue for x in om_hs1])
-heat_cost = pd.Series([x.varValue for x in high_heat]) * ut.steam_price * 0.25
+heat_cost = pd.Series([x.varValue for x in buy_heat]) * ut.steam_price * 0.25
 
 dep_cost = pd.Series([x.varValue for x in aux_pwst])
 electricity_cost = 0.25 * pd.Series([x.varValue for x in power_utility]) * pd.Series(ut.buy_price)
 fuel_cost = pd.Series([x.varValue for x in hourly_cost]) - om_cost - dep_cost - electricity_cost
 for i in range(72,76):
-    desiredpower[i] = desiredpower[i] - 3000
+    desiredpower[i] = desiredpower[i] - 600
 print(sum([x.varValue for x in hourly_cost]))
 df= pd.DataFrame()
+df['电价'] = ut.buy_price
 df['电网购电功率'] = ut.result
-df['蒸汽购买量(单位：t)'] = pd.Series([x.varValue for x in high_heat]) / 996
-df['天然气购买量（单位：立方米）'] = ut.gas_utility * 0.25 * 3600 / 35885
+df['蒸汽购买量(单位：t)'] = pd.Series([x.varValue for x in buy_heat]) * 0.25 / 996
 df['中品位热功率'] = pd.Series([x.varValue for x in medium_heat])
 df['低品位热功率'] = pd.Series([x.varValue for x in low_heat])
 df['电储能充电功率'] = es1.power_into
@@ -355,10 +347,7 @@ df['冰蓄冷储冷功率'] = cs1.result_stored
 df['冰蓄冷储冷量'] = pd.Series([x.varValue for x in S_ice])
 df['吸收式制冷机制冷功率'] = absc1.result * absc1.COP_htc
 df['余热锅炉中品位热功率'] = gt1.result*gt1.HER*gt1.heat_recycle
-df['燃气锅炉高品位热功率'] = bol1.result
-#df['热储能功率'] = hs1.result
-#df['热储能吸收或释放的能量'] = hs1.result * 0.25
-#df['热储能热量'] = hs1.energy
+df['燃气锅炉中品位热功率'] = bol1.result
 df['电价'] = pd.Series(ut.buy_price)
 df['期望功率'] = desiredpower
 df['总费用'] = pd.Series([x.varValue for x in hourly_cost])
