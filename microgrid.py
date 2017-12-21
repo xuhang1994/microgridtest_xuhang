@@ -6,7 +6,7 @@ class PV:
     def show(self):
         return {"运行成本(元/kWh)":self.om}
 
-
+## 储能参数
 class electricStorage:
     def __init__(self, om = 0.005, Cbw = 0.00075 , capacity = 9600, SOCmin = 0.1, SOCmax = 0.9, SOCint = 0.1, Pmin = -1250, Pmax = 1250, efficiency = 0.95, selfRelease = 0.0025):
         self.om = om
